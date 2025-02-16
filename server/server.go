@@ -3,10 +3,12 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/abdulkarimogaji/invoGenius/config"
 	"github.com/abdulkarimogaji/invoGenius/db"
 	"github.com/abdulkarimogaji/invoGenius/middleware"
 )
@@ -53,9 +55,9 @@ func StartServer() error {
 	stack := middleware.CreateStack(middleware.Logging)
 
 	server := http.Server{
-		Addr:    ":8000",
+		Addr:    fmt.Sprintf(":%v", config.C.Port),
 		Handler: stack(router),
 	}
-	log.Println("Starting server at port 8000")
+	log.Printf("Starting server at port %v", config.C.Port)
 	return server.ListenAndServe()
 }
