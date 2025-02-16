@@ -1,9 +1,2 @@
--- name: GetUser :one
-SELECT
-  *
-FROM
-  user
-WHERE
-  id = ?
-LIMIT
-  1;
+-- name: PingDB :one
+SELECT NOW();
