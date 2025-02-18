@@ -7,6 +7,9 @@ import (
 type config struct {
 	Port         int    `mapstructure:"PORT"`
 	Database_Uri string `mapstructure:"DATABASE_URI"`
+	Token_Secret string `mapstructure:"TOKEN_SECRET"`
+	App_Uri      string `mapstructure:"APP_URI"`
+	Token_Expire int    `mapstructure:"TOKEN_EXPIRE"`
 }
 
 var C config

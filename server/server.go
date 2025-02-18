@@ -11,6 +11,7 @@ import (
 	"github.com/abdulkarimogaji/invoGenius/config"
 	"github.com/abdulkarimogaji/invoGenius/db"
 	"github.com/abdulkarimogaji/invoGenius/middleware"
+	v1 "github.com/abdulkarimogaji/invoGenius/server/api/v1"
 )
 
 type healthResponse struct {
@@ -38,25 +39,39 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
-		// Handle the error (e.g., return an internal server error)
 		http.Error(w, "Failed to create JSON response", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	if response.Error {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+
+		w.WriteHeader(http.StatusOK)
+	}
 	w.Write(jsonResponse)
 }
 
 func StartServer() error {
 	router := http.NewServeMux()
-	router.HandleFunc("GET /", healthHandler)
+	handler := v1.NewHandler()
+
+	v1 := http.NewServeMux()
+	v1.HandleFunc("GET /health", healthHandler)
+	v1.Handle("/v1/api/", http.StripPrefix("/v1/api", router))
+
+	authRouter := http.NewServeMux()
+	authRouter.HandleFunc("GET /require-auth", healthHandler)
+	router.Handle("/", middleware.JwtAuthMiddleware(authRouter))
+
+	router.HandleFunc("POST /login", handler.Login)
 
 	stack := middleware.CreateStack(middleware.Logging)
 
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%v", config.C.Port),
-		Handler: stack(router),
+		Handler: stack(v1),
 	}
 	log.Printf("Starting server at port %v", config.C.Port)
 	return server.ListenAndServe()
