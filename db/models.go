@@ -36,8 +36,8 @@ type Setting struct {
 	ID           int32
 	SettingKey   string
 	SettingValue sql.NullString
-	CreatedAt    sql.NullTime
-	UpdatedAt    sql.NullTime
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 type Transaction struct {
