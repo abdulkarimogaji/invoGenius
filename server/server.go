@@ -68,7 +68,7 @@ func StartServer() error {
 
 	router.HandleFunc("POST /login", handler.Login)
 
-	stack := middleware.CreateStack(middleware.Logging)
+	stack := middleware.CreateStack(middleware.Logging, middleware.AllowCORS)
 
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%v", config.C.Port),
