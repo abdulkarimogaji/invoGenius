@@ -55,7 +55,8 @@ type User struct {
 	FirstName sql.NullString
 	LastName  sql.NullString
 	Email     string
-	Role      sql.NullString
+	Role      string
+	Password  sql.NullString
 	Status    string
 	CreatedAt time.Time
 	UpdatedAt time.Time

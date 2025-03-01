@@ -7,8 +7,56 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
+
+const createUser = `-- name: CreateUser :execresult
+INSERT INTO user (first_name, last_name, role, email, password, created_at, updated_at) VALUES (?,?,?,?,?,?,?)
+`
+
+type CreateUserParams struct {
+	FirstName sql.NullString
+	LastName  sql.NullString
+	Role      string
+	Email     string
+	Password  sql.NullString
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createUser,
+		arg.FirstName,
+		arg.LastName,
+		arg.Role,
+		arg.Email,
+		arg.Password,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, first_name, last_name, email, role, password, status, created_at, updated_at FROM user WHERE email = ?
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.Role,
+		&i.Password,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
 
 const pingDB = `-- name: PingDB :one
 SELECT NOW()

@@ -63,6 +63,7 @@ func StartServer() error {
 
 	authRouter := http.NewServeMux()
 	authRouter.HandleFunc("GET /require-auth", healthHandler)
+	authRouter.HandleFunc("POST /users", handler.CreateUser)
 	router.Handle("/", middleware.JwtAuthMiddleware(authRouter))
 
 	router.HandleFunc("POST /login", handler.Login)
