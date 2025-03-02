@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"time"
@@ -13,6 +14,11 @@ import (
 	"github.com/abdulkarimogaji/invoGenius/middleware"
 	v1 "github.com/abdulkarimogaji/invoGenius/server/api/v1"
 )
+
+type HomePageData struct {
+	Title   string
+	Message string
+}
 
 type healthResponse struct {
 	Error      bool       `json:"error"`
@@ -53,27 +59,49 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 
+func homePageHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("views/index.html")
+	if err != nil {
+		http.Error(w, "Error loading template", http.StatusInternalServerError)
+		return
+	}
+	data := HomePageData{
+		Title:   "Invo Genius",
+		Message: "Live",
+	}
+
+	// Render the template with data
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+	}
+}
+
 func StartServer() error {
 	router := http.NewServeMux()
 	handler := v1.NewHandler()
 
 	v1 := http.NewServeMux()
-	v1.HandleFunc("GET /health", healthHandler)
-	v1.Handle("/v1/api/", http.StripPrefix("/v1/api", router))
+	router.HandleFunc("GET /health", healthHandler)
+	router.HandleFunc("GET /home", homePageHandler)
+	fs := http.FileServer(http.Dir("public"))
+	router.Handle("/public/", http.StripPrefix("/public/", fs))
+	router.Handle("/v1/api/", http.StripPrefix("/v1/api", v1))
 
 	authRouter := http.NewServeMux()
-	authRouter.HandleFunc("GET /require-auth", healthHandler)
 	authRouter.HandleFunc("POST /users", handler.CreateUser)
-	router.Handle("/", middleware.JwtAuthMiddleware(authRouter))
+	v1.Handle("/", middleware.JwtAuthMiddleware(authRouter))
 
-	router.HandleFunc("POST /login", handler.Login)
+	v1.HandleFunc("POST /login", handler.Login)
 
 	stack := middleware.CreateStack(middleware.Logging, middleware.AllowCORS)
 
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%v", config.C.Port),
-		Handler: stack(v1),
+		Handler: stack(router),
 	}
+
 	log.Printf("Starting server at port %v", config.C.Port)
+
 	return server.ListenAndServe()
 }
