@@ -6,3 +6,6 @@ INSERT INTO user (first_name, last_name, role, email, password, created_at, upda
 
 -- name: GetUserByEmail :one
 SELECT * FROM user WHERE email = ?;
+
+-- name: GetUserByID :one
+SELECT * FROM user WHERE id = ?;
