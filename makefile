@@ -30,9 +30,9 @@ create_migrate:
 	@:
 
 migrate_up:
-	migrate -path=./db/migrations -database="mysql://$(DATABASE_URI)" up
+	migrate -path=./db/migrations -database="$(MIGRATE_DATABASE_URI)" up
 
 migrate_down:
-	migrate -path=./db/migrations -database="mysql://$(DATABASE_URI)" down
+	migrate -path=./db/migrations -database="$(MIGRATE_DATABASE_URI)" down
 
 .PHONY: all build run test clean create_migrate migrate_up migrate_down
