@@ -16,13 +16,13 @@ INSERT INTO user (first_name, last_name, role, email, password, created_at, upda
 `
 
 type CreateUserParams struct {
-	FirstName sql.NullString
-	LastName  sql.NullString
-	Role      string
-	Email     string
-	Password  sql.NullString
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	FirstName string         `json:"first_name"`
+	LastName  string         `json:"last_name"`
+	Role      string         `json:"role"`
+	Email     string         `json:"email"`
+	Password  sql.NullString `json:"password"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error) {
@@ -35,6 +35,94 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (sql.Res
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
+}
+
+const getCustomers = `-- name: GetCustomers :many
+SELECT 
+    u.id, 
+    u.first_name, 
+    u.last_name, 
+    u.status, 
+    u.email, 
+    u.created_at, 
+    COALESCE(inv.currency, '') AS currency,
+    COUNT(inv.id) AS number_of_invoices, 
+    CAST(COALESCE(SUM(inv.total_amount), 0) AS SIGNED) AS total_billed, 
+    CAST(COALESCE(SUM(inv.amount_paid), 0) AS SIGNED) AS total_collected
+FROM user u
+LEFT JOIN (
+    SELECT 
+        i.id,
+        i.currency, 
+        i.user_id, 
+        (i.amount + (i.amount * i.vat * 0.01)) AS total_amount, 
+        COALESCE(SUM(t.amount), 0) AS amount_paid
+    FROM invoice i
+    LEFT JOIN transaction t 
+        ON t.invoice_id = i.id
+    GROUP BY i.id
+) inv ON inv.user_id = u.id
+WHERE u.role = 'customer'
+GROUP BY 
+    u.id, u.first_name, u.last_name, u.status, u.email, u.created_at
+`
+
+type GetCustomersRow struct {
+	ID               int32     `json:"id"`
+	FirstName        string    `json:"first_name"`
+	LastName         string    `json:"last_name"`
+	Status           string    `json:"status"`
+	Email            string    `json:"email"`
+	CreatedAt        time.Time `json:"created_at"`
+	Currency         string    `json:"currency"`
+	NumberOfInvoices int64     `json:"number_of_invoices"`
+	TotalBilled      int64     `json:"total_billed"`
+	TotalCollected   int64     `json:"total_collected"`
+}
+
+func (q *Queries) GetCustomers(ctx context.Context) ([]GetCustomersRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCustomers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCustomersRow
+	for rows.Next() {
+		var i GetCustomersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FirstName,
+			&i.LastName,
+			&i.Status,
+			&i.Email,
+			&i.CreatedAt,
+			&i.Currency,
+			&i.NumberOfInvoices,
+			&i.TotalBilled,
+			&i.TotalCollected,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDefaultCurrency = `-- name: GetDefaultCurrency :one
+SELECT setting_value FROM setting WHERE setting_key = 'currency'
+`
+
+func (q *Queries) GetDefaultCurrency(ctx context.Context) (string, error) {
+	row := q.db.QueryRowContext(ctx, getDefaultCurrency)
+	var setting_value string
+	err := row.Scan(&setting_value)
+	return setting_value, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one

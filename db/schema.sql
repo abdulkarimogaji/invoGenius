@@ -8,13 +8,14 @@ CREATE TABLE `invoice` (
   `from_date` date NOT NULL,
   `until_date` date NOT NULL,
   `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL
+  `updated_at` datetime NOT NULL,
+  `currency` varchar(255) NOT NULL
 );
 
 CREATE TABLE `user` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
-  `first_name` varchar(255),
-  `last_name` varchar(255),
+  `first_name` varchar(255) NOT NULL,
+  `last_name` varchar(255) NOT NULL,
   `email` varchar(255) UNIQUE NOT NULL,
   `role` varchar(255) NOT NULL,
   `password` varchar(255),
@@ -30,9 +31,9 @@ CREATE TABLE `transaction` (
   `paid_at` datetime,
   `status` varchar(255) NOT NULL,
   `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL
+  `updated_at` datetime NOT NULL,
+  `amount` double NOT NULL
 );
-
 CREATE TABLE `receipt` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `transaction_id` int NOT NULL,
@@ -46,11 +47,10 @@ CREATE TABLE `receipt` (
 CREATE TABLE `setting` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `setting_key` varchar(255) UNIQUE NOT NULL,
-  `setting_value` varchar(255),
+  `setting_value` varchar(255) NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL
 );
-
 
 ALTER TABLE `invoice` ADD FOREIGN KEY (`user_id`) REFERENCES `user` (`id`);
 

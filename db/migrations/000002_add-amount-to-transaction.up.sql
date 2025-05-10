@@ -1,0 +1,1 @@
+ALTER TABLE `transaction` ADD `amount` DOUBLE NOT NULL;

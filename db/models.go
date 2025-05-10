@@ -10,54 +10,56 @@ import (
 )
 
 type Invoice struct {
-	ID        int32
-	UserID    int32
-	Amount    float64
-	Vat       float64
-	Type      string
-	IssuedAt  time.Time
-	FromDate  time.Time
-	UntilDate time.Time
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        int32     `json:"id"`
+	UserID    int32     `json:"user_id"`
+	Amount    float64   `json:"amount"`
+	Vat       float64   `json:"vat"`
+	Type      string    `json:"type"`
+	IssuedAt  time.Time `json:"issued_at"`
+	FromDate  time.Time `json:"from_date"`
+	UntilDate time.Time `json:"until_date"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Currency  string    `json:"currency"`
 }
 
 type Receipt struct {
-	ID            int32
-	TransactionID int32
-	UploadedBy    sql.NullInt32
-	Filename      sql.NullString
-	File          sql.NullString
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID            int32          `json:"id"`
+	TransactionID int32          `json:"transaction_id"`
+	UploadedBy    sql.NullInt32  `json:"uploaded_by"`
+	Filename      sql.NullString `json:"filename"`
+	File          sql.NullString `json:"file"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
 }
 
 type Setting struct {
-	ID           int32
-	SettingKey   string
-	SettingValue sql.NullString
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID           int32     `json:"id"`
+	SettingKey   string    `json:"setting_key"`
+	SettingValue string    `json:"setting_value"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type Transaction struct {
-	ID            int32
-	InvoiceID     int32
-	PaymentMethod sql.NullString
-	PaidAt        sql.NullTime
-	Status        string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID            int32          `json:"id"`
+	InvoiceID     int32          `json:"invoice_id"`
+	PaymentMethod sql.NullString `json:"payment_method"`
+	PaidAt        sql.NullTime   `json:"paid_at"`
+	Status        string         `json:"status"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	Amount        float64        `json:"amount"`
 }
 
 type User struct {
-	ID        int32
-	FirstName sql.NullString
-	LastName  sql.NullString
-	Email     string
-	Role      string
-	Password  sql.NullString
-	Status    string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        int32          `json:"id"`
+	FirstName string         `json:"first_name"`
+	LastName  string         `json:"last_name"`
+	Email     string         `json:"email"`
+	Role      string         `json:"role"`
+	Password  sql.NullString `json:"password"`
+	Status    string         `json:"status"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }

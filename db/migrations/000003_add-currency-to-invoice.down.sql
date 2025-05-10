@@ -1,0 +1,1 @@
+ALTER TABLE ALTER TABLE `invoice` DROP COLUMN `currency`;

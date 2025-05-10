@@ -1,0 +1,1 @@
+ALTER TABLE `invoice` ADD `currency` VARCHAR(22) NOT NULL;
