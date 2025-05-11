@@ -9,7 +9,20 @@ CREATE TABLE `invoice` (
   `until_date` date NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
-  `currency` varchar(255) NOT NULL
+  `currency` varchar(255) NOT NULL,
+  `deadline` datetime NOT NULL,
+  `invoice_file` text
+);
+
+CREATE TABLE `invoice_activity` (
+  `id` int PRIMARY KEY AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `invoice_id` int NOT NULL,
+  `action_type` varchar(255) NOT NULL,
+  `resource_id` int NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  `attachment` text
 );
 
 CREATE TABLE `user` (
@@ -34,6 +47,7 @@ CREATE TABLE `transaction` (
   `updated_at` datetime NOT NULL,
   `amount` double NOT NULL
 );
+
 CREATE TABLE `receipt` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `transaction_id` int NOT NULL,
@@ -59,3 +73,7 @@ ALTER TABLE `transaction` ADD FOREIGN KEY (`invoice_id`) REFERENCES `invoice` (`
 ALTER TABLE `receipt` ADD FOREIGN KEY (`transaction_id`) REFERENCES `transaction` (`id`);
 
 ALTER TABLE `receipt` ADD FOREIGN KEY (`uploaded_by`) REFERENCES `user` (`id`);
+
+ALTER TABLE `invoice_activity` ADD FOREIGN KEY (`user_id`) REFERENCES `user` (`id`);
+
+ALTER TABLE `invoice_activity` ADD FOREIGN KEY (`invoice_id`) REFERENCES `invoice` (`id`);
