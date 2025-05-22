@@ -7,30 +7,45 @@ package db
 import (
 	"database/sql"
 	"time"
+
+	"github.com/abdulkarimogaji/invoGenius/utils/types"
 )
 
 type Invoice struct {
-	ID        int32     `json:"id"`
-	UserID    int32     `json:"user_id"`
-	Amount    float64   `json:"amount"`
-	Vat       float64   `json:"vat"`
-	Type      string    `json:"type"`
-	IssuedAt  time.Time `json:"issued_at"`
-	FromDate  time.Time `json:"from_date"`
-	UntilDate time.Time `json:"until_date"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Currency  string    `json:"currency"`
+	ID          int32                `json:"id"`
+	UserID      int32                `json:"user_id"`
+	Amount      float64              `json:"amount"`
+	Vat         float64              `json:"vat"`
+	Type        string               `json:"type"`
+	IssuedAt    time.Time            `json:"issued_at"`
+	FromDate    time.Time            `json:"from_date"`
+	UntilDate   time.Time            `json:"until_date"`
+	CreatedAt   time.Time            `json:"created_at"`
+	UpdatedAt   time.Time            `json:"updated_at"`
+	Currency    string               `json:"currency"`
+	Deadline    time.Time            `json:"deadline"`
+	InvoiceFile types.JSONNullString `json:"invoice_file"`
+}
+
+type InvoiceActivity struct {
+	ID         int32                `json:"id"`
+	UserID     int32                `json:"user_id"`
+	InvoiceID  int32                `json:"invoice_id"`
+	ActionType string               `json:"action_type"`
+	ResourceID int32                `json:"resource_id"`
+	CreatedAt  time.Time            `json:"created_at"`
+	UpdatedAt  time.Time            `json:"updated_at"`
+	Attachment types.JSONNullString `json:"attachment"`
 }
 
 type Receipt struct {
-	ID            int32          `json:"id"`
-	TransactionID int32          `json:"transaction_id"`
-	UploadedBy    sql.NullInt32  `json:"uploaded_by"`
-	Filename      sql.NullString `json:"filename"`
-	File          sql.NullString `json:"file"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
+	ID            int32                `json:"id"`
+	TransactionID int32                `json:"transaction_id"`
+	UploadedBy    sql.NullInt32        `json:"uploaded_by"`
+	Filename      types.JSONNullString `json:"filename"`
+	File          types.JSONNullString `json:"file"`
+	CreatedAt     time.Time            `json:"created_at"`
+	UpdatedAt     time.Time            `json:"updated_at"`
 }
 
 type Setting struct {
@@ -42,24 +57,26 @@ type Setting struct {
 }
 
 type Transaction struct {
-	ID            int32          `json:"id"`
-	InvoiceID     int32          `json:"invoice_id"`
-	PaymentMethod sql.NullString `json:"payment_method"`
-	PaidAt        sql.NullTime   `json:"paid_at"`
-	Status        string         `json:"status"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
-	Amount        float64        `json:"amount"`
+	ID            int32                `json:"id"`
+	InvoiceID     int32                `json:"invoice_id"`
+	PaymentMethod types.JSONNullString `json:"payment_method"`
+	PaidAt        sql.NullTime         `json:"paid_at"`
+	Status        string               `json:"status"`
+	CreatedAt     time.Time            `json:"created_at"`
+	UpdatedAt     time.Time            `json:"updated_at"`
+	Amount        float64              `json:"amount"`
 }
 
 type User struct {
-	ID        int32          `json:"id"`
-	FirstName string         `json:"first_name"`
-	LastName  string         `json:"last_name"`
-	Email     string         `json:"email"`
-	Role      string         `json:"role"`
-	Password  sql.NullString `json:"password"`
-	Status    string         `json:"status"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
+	ID        int32                `json:"id"`
+	FirstName string               `json:"first_name"`
+	LastName  string               `json:"last_name"`
+	Email     string               `json:"email"`
+	Phone     string               `json:"phone"`
+	Photo     types.JSONNullString `json:"photo"`
+	Role      string               `json:"role"`
+	Password  types.JSONNullString `json:"password"`
+	Status    string               `json:"status"`
+	CreatedAt time.Time            `json:"created_at"`
+	UpdatedAt time.Time            `json:"updated_at"`
 }
