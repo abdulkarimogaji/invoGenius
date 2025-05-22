@@ -11,6 +11,7 @@ import (
 	"github.com/abdulkarimogaji/invoGenius/db"
 	"github.com/abdulkarimogaji/invoGenius/server/helpers"
 	"github.com/abdulkarimogaji/invoGenius/services/password"
+	"github.com/abdulkarimogaji/invoGenius/utils/types"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -70,7 +71,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		LastName:  requestBody.LastName,
 		Role:      requestBody.Role,
 		Email:     requestBody.Email,
-		Password:  sql.NullString{String: hash, Valid: true},
+		Password:  types.JSONNullString{String: hash, Valid: true},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	})

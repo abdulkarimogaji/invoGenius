@@ -90,6 +90,8 @@ func StartServer() error {
 
 	authRouter := http.NewServeMux()
 	authRouter.HandleFunc("POST /users", handler.CreateUser)
+	authRouter.HandleFunc("POST /invoices", handler.CreateInvoice)
+	authRouter.HandleFunc("GET /invoices", handler.GetInvoices)
 	authRouter.HandleFunc("GET /customers", handler.GetCustomers)
 	authRouter.HandleFunc("GET /token", handler.CheckToken)
 	v1.Handle("/", middleware.JwtAuthMiddleware(authRouter))

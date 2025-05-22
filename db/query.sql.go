@@ -9,20 +9,82 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	"github.com/abdulkarimogaji/invoGenius/utils/types"
 )
+
+const createInvoice = `-- name: CreateInvoice :execresult
+INSERT INTO invoice (user_id, amount, vat, type, issued_at, from_date, until_date, created_at, updated_at, currency, deadline) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+`
+
+type CreateInvoiceParams struct {
+	UserID    int32     `json:"user_id"`
+	Amount    float64   `json:"amount"`
+	Vat       float64   `json:"vat"`
+	Type      string    `json:"type"`
+	IssuedAt  time.Time `json:"issued_at"`
+	FromDate  time.Time `json:"from_date"`
+	UntilDate time.Time `json:"until_date"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Currency  string    `json:"currency"`
+	Deadline  time.Time `json:"deadline"`
+}
+
+func (q *Queries) CreateInvoice(ctx context.Context, arg CreateInvoiceParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createInvoice,
+		arg.UserID,
+		arg.Amount,
+		arg.Vat,
+		arg.Type,
+		arg.IssuedAt,
+		arg.FromDate,
+		arg.UntilDate,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.Currency,
+		arg.Deadline,
+	)
+}
+
+const createInvoiceActivity = `-- name: CreateInvoiceActivity :execresult
+INSERT INTO invoice_activity (user_id, invoice_id, action_type, resource_id, created_at, updated_at, attachment) VALUES (?,?,?,?,?,?,?)
+`
+
+type CreateInvoiceActivityParams struct {
+	UserID     int32                `json:"user_id"`
+	InvoiceID  int32                `json:"invoice_id"`
+	ActionType string               `json:"action_type"`
+	ResourceID int32                `json:"resource_id"`
+	CreatedAt  time.Time            `json:"created_at"`
+	UpdatedAt  time.Time            `json:"updated_at"`
+	Attachment types.JSONNullString `json:"attachment"`
+}
+
+func (q *Queries) CreateInvoiceActivity(ctx context.Context, arg CreateInvoiceActivityParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createInvoiceActivity,
+		arg.UserID,
+		arg.InvoiceID,
+		arg.ActionType,
+		arg.ResourceID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.Attachment,
+	)
+}
 
 const createUser = `-- name: CreateUser :execresult
 INSERT INTO user (first_name, last_name, role, email, password, created_at, updated_at) VALUES (?,?,?,?,?,?,?)
 `
 
 type CreateUserParams struct {
-	FirstName string         `json:"first_name"`
-	LastName  string         `json:"last_name"`
-	Role      string         `json:"role"`
-	Email     string         `json:"email"`
-	Password  sql.NullString `json:"password"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
+	FirstName string               `json:"first_name"`
+	LastName  string               `json:"last_name"`
+	Role      string               `json:"role"`
+	Email     string               `json:"email"`
+	Password  types.JSONNullString `json:"password"`
+	CreatedAt time.Time            `json:"created_at"`
+	UpdatedAt time.Time            `json:"updated_at"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error) {
@@ -125,8 +187,134 @@ func (q *Queries) GetDefaultCurrency(ctx context.Context) (string, error) {
 	return setting_value, err
 }
 
+const getDefaultVAT = `-- name: GetDefaultVAT :one
+SELECT setting_value FROM setting WHERE setting_key = 'vat'
+`
+
+func (q *Queries) GetDefaultVAT(ctx context.Context) (string, error) {
+	row := q.db.QueryRowContext(ctx, getDefaultVAT)
+	var setting_value string
+	err := row.Scan(&setting_value)
+	return setting_value, err
+}
+
+const getInvoiceSettings = `-- name: GetInvoiceSettings :many
+SELECT setting_key, setting_value FROM setting WHERE setting_key IN ('currency', 'vat', 'deadline_days')
+`
+
+type GetInvoiceSettingsRow struct {
+	SettingKey   string `json:"setting_key"`
+	SettingValue string `json:"setting_value"`
+}
+
+func (q *Queries) GetInvoiceSettings(ctx context.Context) ([]GetInvoiceSettingsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getInvoiceSettings)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetInvoiceSettingsRow
+	for rows.Next() {
+		var i GetInvoiceSettingsRow
+		if err := rows.Scan(&i.SettingKey, &i.SettingValue); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getInvoices = `-- name: GetInvoices :many
+SELECT 
+  inv.id, 
+  inv.amount, 
+  inv.vat, 
+  inv.type, 
+  inv.issued_at, 
+  inv.from_date, 
+  inv.until_date, 
+  inv.deadline, 
+  inv.currency, 
+  inv.invoice_file, 
+  u.first_name, 
+  u.last_name, 
+  u.email, 
+  u.photo,
+  u.phone
+FROM 
+  invoice inv
+LEFT JOIN 
+  user u 
+  ON u.id = inv.user_id
+WHERE 
+  1
+`
+
+type GetInvoicesRow struct {
+	ID          int32                `json:"id"`
+	Amount      float64              `json:"amount"`
+	Vat         float64              `json:"vat"`
+	Type        string               `json:"type"`
+	IssuedAt    time.Time            `json:"issued_at"`
+	FromDate    time.Time            `json:"from_date"`
+	UntilDate   time.Time            `json:"until_date"`
+	Deadline    time.Time            `json:"deadline"`
+	Currency    string               `json:"currency"`
+	InvoiceFile types.JSONNullString `json:"invoice_file"`
+	FirstName   types.JSONNullString `json:"first_name"`
+	LastName    types.JSONNullString `json:"last_name"`
+	Email       types.JSONNullString `json:"email"`
+	Photo       types.JSONNullString `json:"photo"`
+	Phone       types.JSONNullString `json:"phone"`
+}
+
+func (q *Queries) GetInvoices(ctx context.Context) ([]GetInvoicesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getInvoices)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetInvoicesRow
+	for rows.Next() {
+		var i GetInvoicesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Amount,
+			&i.Vat,
+			&i.Type,
+			&i.IssuedAt,
+			&i.FromDate,
+			&i.UntilDate,
+			&i.Deadline,
+			&i.Currency,
+			&i.InvoiceFile,
+			&i.FirstName,
+			&i.LastName,
+			&i.Email,
+			&i.Photo,
+			&i.Phone,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, first_name, last_name, email, role, password, status, created_at, updated_at FROM user WHERE email = ?
+SELECT id, first_name, last_name, email, phone, photo, role, password, status, created_at, updated_at FROM user WHERE email = ?
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -137,6 +325,8 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.FirstName,
 		&i.LastName,
 		&i.Email,
+		&i.Phone,
+		&i.Photo,
 		&i.Role,
 		&i.Password,
 		&i.Status,
@@ -147,7 +337,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, first_name, last_name, email, role, password, status, created_at, updated_at FROM user WHERE id = ?
+SELECT id, first_name, last_name, email, phone, photo, role, password, status, created_at, updated_at FROM user WHERE id = ?
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
@@ -158,6 +348,8 @@ func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
 		&i.FirstName,
 		&i.LastName,
 		&i.Email,
+		&i.Phone,
+		&i.Photo,
 		&i.Role,
 		&i.Password,
 		&i.Status,
