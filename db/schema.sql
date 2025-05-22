@@ -30,6 +30,8 @@ CREATE TABLE `user` (
   `first_name` varchar(255) NOT NULL,
   `last_name` varchar(255) NOT NULL,
   `email` varchar(255) UNIQUE NOT NULL,
+  `phone` varchar(255) NOT NULL,
+  `photo` text,
   `role` varchar(255) NOT NULL,
   `password` varchar(255),
   `status` varchar(255) NOT NULL DEFAULT 'inactive',
