@@ -56,7 +56,8 @@ INSERT INTO invoice (user_id, amount, vat, type, issued_at, from_date, until_dat
 SELECT 
   inv.id, 
   inv.amount, 
-  inv.vat, 
+  inv.vat,
+  CAST(inv.amount + (inv.amount * inv.vat * 0.01) AS signed) AS total_amount, 
   inv.type, 
   inv.issued_at, 
   inv.from_date, 

@@ -31,10 +31,33 @@ type createInvoiceResponse struct {
 	InvoiceID int    `json:"invoice_id"`
 }
 
+type customerResponse struct {
+	FirstName types.JSONNullString `json:"first_name"`
+	LastName  types.JSONNullString `json:"last_name"`
+	Email     types.JSONNullString `json:"email"`
+	Photo     types.JSONNullString `json:"photo"`
+	Phone     types.JSONNullString `json:"phone"`
+}
+
+type invoiceResponse struct {
+	ID          int32                `json:"id"`
+	Amount      float64              `json:"amount"`
+	Vat         float64              `json:"vat"`
+	TotalAmount int64                `json:"total_amount"`
+	Type        string               `json:"type"`
+	IssuedAt    time.Time            `json:"issued_at"`
+	FromDate    time.Time            `json:"from_date"`
+	UntilDate   time.Time            `json:"until_date"`
+	Deadline    time.Time            `json:"deadline"`
+	Currency    string               `json:"currency"`
+	InvoiceFile types.JSONNullString `json:"invoice_file"`
+	Customer    customerResponse     `json:"customer"`
+}
+
 type getInvoicesResponse struct {
-	Error    bool                `json:"error"`
-	Message  string              `json:"message"`
-	Invoices []db.GetInvoicesRow `json:"invoices"`
+	Error    bool              `json:"error"`
+	Message  string            `json:"message"`
+	Invoices []invoiceResponse `json:"invoices"`
 }
 
 func (h *Handler) CreateInvoice(w http.ResponseWriter, r *http.Request) {
@@ -163,10 +186,36 @@ func (h *Handler) CreateInvoice(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetInvoices(w http.ResponseWriter, r *http.Request) {
-	invoices, err := db.DB.GetInvoices(r.Context())
+	results, err := db.DB.GetInvoices(r.Context())
 	if err != nil {
 		helpers.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
+	}
+
+	invoices := []invoiceResponse{}
+
+	for _, row := range results {
+		inv := invoiceResponse{
+			ID:          row.ID,
+			Amount:      row.Amount,
+			Vat:         row.Vat,
+			TotalAmount: row.TotalAmount,
+			Type:        row.Type,
+			IssuedAt:    row.IssuedAt,
+			FromDate:    row.FromDate,
+			UntilDate:   row.UntilDate,
+			Deadline:    row.Deadline,
+			Currency:    row.Currency,
+			InvoiceFile: row.InvoiceFile,
+			Customer: customerResponse{
+				FirstName: row.FirstName,
+				LastName:  row.LastName,
+				Email:     row.Email,
+				Photo:     row.Photo,
+				Phone:     row.Phone,
+			},
+		}
+		invoices = append(invoices, inv)
 	}
 
 	response := getInvoicesResponse{

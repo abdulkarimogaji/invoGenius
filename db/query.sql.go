@@ -234,7 +234,8 @@ const getInvoices = `-- name: GetInvoices :many
 SELECT 
   inv.id, 
   inv.amount, 
-  inv.vat, 
+  inv.vat,
+  CAST(inv.amount + (inv.amount * inv.vat * 0.01) AS signed) AS total_amount, 
   inv.type, 
   inv.issued_at, 
   inv.from_date, 
@@ -260,6 +261,7 @@ type GetInvoicesRow struct {
 	ID          int32                `json:"id"`
 	Amount      float64              `json:"amount"`
 	Vat         float64              `json:"vat"`
+	TotalAmount int64                `json:"total_amount"`
 	Type        string               `json:"type"`
 	IssuedAt    time.Time            `json:"issued_at"`
 	FromDate    time.Time            `json:"from_date"`
@@ -287,6 +289,7 @@ func (q *Queries) GetInvoices(ctx context.Context) ([]GetInvoicesRow, error) {
 			&i.ID,
 			&i.Amount,
 			&i.Vat,
+			&i.TotalAmount,
 			&i.Type,
 			&i.IssuedAt,
 			&i.FromDate,
