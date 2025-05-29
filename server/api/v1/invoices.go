@@ -83,6 +83,26 @@ func (h *Handler) CreateInvoice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userIDStr, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok {
+		helpers.ErrorResponse(w, fmt.Errorf("invalid user id"), http.StatusInternalServerError)
+		return
+	}
+
+	userID, err := strconv.ParseInt(userIDStr, 10, 32)
+	if err != nil {
+		helpers.ErrorResponse(w, fmt.Errorf("invalid user id"), http.StatusInternalServerError)
+		return
+	}
+	_, err = db.DB.GetUserByID(r.Context(), int32(userID))
+	if err == sql.ErrNoRows {
+		helpers.ErrorResponse(w, fmt.Errorf("user not found"), http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		helpers.ErrorResponse(w, err, http.StatusInternalServerError)
+	}
+
 	_, err = db.DB.GetUserByID(r.Context(), int32(requestBody.UserID))
 	if err == sql.ErrNoRows {
 		helpers.ErrorResponse(w, fmt.Errorf("user not found"), http.StatusNotFound)
@@ -132,6 +152,7 @@ func (h *Handler) CreateInvoice(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt: time.Now(),
 		Currency:  requestBody.Currency,
 		Deadline:  time.Now().Add(time.Hour * 24 * time.Duration(deadlineDays)),
+		CreatedBy: int32(userID),
 	})
 
 	if err != nil {
@@ -142,18 +163,6 @@ func (h *Handler) CreateInvoice(w http.ResponseWriter, r *http.Request) {
 	invoiceID, err := result.LastInsertId()
 	if err != nil {
 		helpers.ErrorResponse(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	userIDStr, ok := r.Context().Value(middleware.UserIDKey).(string)
-	if !ok {
-		helpers.ErrorResponse(w, fmt.Errorf("invalid user id"), http.StatusInternalServerError)
-		return
-	}
-
-	userID, err := strconv.ParseInt(userIDStr, 10, 32)
-	if err != nil {
-		helpers.ErrorResponse(w, fmt.Errorf("invalid user id"), http.StatusInternalServerError)
 		return
 	}
 

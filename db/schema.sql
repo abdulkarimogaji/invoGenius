@@ -11,7 +11,8 @@ CREATE TABLE `invoice` (
   `updated_at` datetime NOT NULL,
   `currency` varchar(255) NOT NULL,
   `deadline` datetime NOT NULL,
-  `invoice_file` text
+  `invoice_file` text,
+  `created_by` int NOT NULL
 );
 
 CREATE TABLE `invoice_activity` (
@@ -79,3 +80,5 @@ ALTER TABLE `receipt` ADD FOREIGN KEY (`uploaded_by`) REFERENCES `user` (`id`);
 ALTER TABLE `invoice_activity` ADD FOREIGN KEY (`user_id`) REFERENCES `user` (`id`);
 
 ALTER TABLE `invoice_activity` ADD FOREIGN KEY (`invoice_id`) REFERENCES `invoice` (`id`);
+
+ALTER TABLE `invoice` ADD FOREIGN KEY (`created_by`) REFERENCES `user` (`id`);

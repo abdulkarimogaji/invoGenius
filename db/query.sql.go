@@ -14,7 +14,7 @@ import (
 )
 
 const createInvoice = `-- name: CreateInvoice :execresult
-INSERT INTO invoice (user_id, amount, vat, type, issued_at, from_date, until_date, created_at, updated_at, currency, deadline) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+INSERT INTO invoice (user_id, amount, vat, type, issued_at, from_date, until_date, created_at, updated_at, currency, deadline, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
 `
 
 type CreateInvoiceParams struct {
@@ -29,6 +29,7 @@ type CreateInvoiceParams struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	Currency  string    `json:"currency"`
 	Deadline  time.Time `json:"deadline"`
+	CreatedBy int32     `json:"created_by"`
 }
 
 func (q *Queries) CreateInvoice(ctx context.Context, arg CreateInvoiceParams) (sql.Result, error) {
@@ -44,6 +45,7 @@ func (q *Queries) CreateInvoice(ctx context.Context, arg CreateInvoiceParams) (s
 		arg.UpdatedAt,
 		arg.Currency,
 		arg.Deadline,
+		arg.CreatedBy,
 	)
 }
 

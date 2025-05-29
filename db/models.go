@@ -25,6 +25,7 @@ type Invoice struct {
 	Currency    string               `json:"currency"`
 	Deadline    time.Time            `json:"deadline"`
 	InvoiceFile types.JSONNullString `json:"invoice_file"`
+	CreatedBy   int32                `json:"created_by"`
 }
 
 type InvoiceActivity struct {

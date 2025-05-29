@@ -50,7 +50,7 @@ SELECT setting_value FROM setting WHERE setting_key = 'vat';
 SELECT setting_key, setting_value FROM setting WHERE setting_key IN ('currency', 'vat', 'deadline_days');
 
 -- name: CreateInvoice :execresult
-INSERT INTO invoice (user_id, amount, vat, type, issued_at, from_date, until_date, created_at, updated_at, currency, deadline) VALUES (?,?,?,?,?,?,?,?,?,?,?);
+INSERT INTO invoice (user_id, amount, vat, type, issued_at, from_date, until_date, created_at, updated_at, currency, deadline, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?);
 
 -- name: GetInvoices :many
 SELECT 
