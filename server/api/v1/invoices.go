@@ -60,6 +60,12 @@ type getInvoicesResponse struct {
 	Invoices []invoiceResponse `json:"invoices"`
 }
 
+type getInvoiceSettingsResponse struct {
+	Error   bool              `json:"error"`
+	Message string            `json:"message"`
+	Result  map[string]string `json:"result"`
+}
+
 func (h *Handler) CreateInvoice(w http.ResponseWriter, r *http.Request) {
 	var requestBody createInvoiceRequest
 
@@ -231,6 +237,35 @@ func (h *Handler) GetInvoices(w http.ResponseWriter, r *http.Request) {
 		Error:    false,
 		Message:  "invoice created successfully",
 		Invoices: invoices,
+	}
+
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		helpers.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+}
+
+func (h *Handler) GetInvoiceSettings(w http.ResponseWriter, r *http.Request) {
+	results, err := db.DB.GetInvoiceSettings(r.Context())
+	if err != nil {
+		helpers.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	invoiceSettings := make(map[string]string)
+	for _, value := range results {
+		invoiceSettings[value.SettingKey] = value.SettingValue
+	}
+
+	response := getInvoiceSettingsResponse{
+		Error:   false,
+		Message: "data fetched successfully",
+		Result:  invoiceSettings,
 	}
 
 	jsonResponse, err := json.Marshal(response)
