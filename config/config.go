@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -15,12 +16,17 @@ type config struct {
 var C config
 
 func LoadConfig() error {
-	viper.SetConfigFile(".env")
-	err := viper.ReadInConfig()
-
+	err := godotenv.Load(".env")
 	if err != nil {
 		return err
 	}
+
+	viper.BindEnv("PORT")
+	viper.BindEnv("DATABASE_URI")
+	viper.BindEnv("TOKEN_SECRET")
+	viper.BindEnv("APP_URI")
+	viper.BindEnv("TOKEN_EXPIRE")
+
 	viper.AutomaticEnv()
 	err = viper.Unmarshal(&C)
 	return err
