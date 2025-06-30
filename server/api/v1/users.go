@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/abdulkarimogaji/invoGenius/db"
@@ -21,6 +22,7 @@ type createUserRequest struct {
 	Email     string `json:"email" validate:"required,email"`
 	Password  string `json:"password" validate:"required"`
 	Role      string `json:"role" validate:"required"`
+	Phone     string `json:"phone" validate:"required"`
 }
 type createUserResponse struct {
 	Error   bool   `json:"error"`
@@ -74,6 +76,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		Password:  types.JSONNullString{String: hash, Valid: true},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
+		Phone:     requestBody.Phone,
 	})
 
 	if err != nil {
@@ -105,7 +108,23 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetCustomers(w http.ResponseWriter, r *http.Request) {
-	customers, err := db.DB.GetCustomers(r.Context())
+
+	query := r.URL.Query()
+
+	cId, err := strconv.Atoi(query.Get("customer_id"))
+	customerId := sql.NullInt32{Int32: int32(cId), Valid: err == nil}
+
+	filters := db.GetCustomersParams{
+		CustomerID: customerId,
+		FirstName:  query.Get("first_name"),
+		LastName:   query.Get("last_name"),
+		Email:      query.Get("email"),
+		Phone:      query.Get("phone"),
+		SortBy:     query.Get("sort_by"),
+		SortOrder:  query.Get("sort_order"),
+	}
+
+	customers, err := db.DB.GetCustomers(r.Context(), filters)
 	if err != nil {
 		helpers.ErrorResponse(w, err, http.StatusInternalServerError)
 		return

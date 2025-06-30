@@ -2,7 +2,7 @@
 SELECT NOW();
 
 -- name: CreateUser :execresult
-INSERT INTO user (first_name, last_name, role, email, password, created_at, updated_at) VALUES (?,?,?,?,?,?,?);
+INSERT INTO user (first_name, last_name, role, email, password, phone, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?);
 
 -- name: GetUserByEmail :one
 SELECT * FROM user WHERE email = ?;
@@ -17,6 +17,7 @@ SELECT
     u.last_name, 
     u.status, 
     u.email, 
+    u.phone,
     u.created_at, 
     COALESCE(inv.currency, '') AS currency,
     COUNT(inv.id) AS number_of_invoices, 
@@ -36,8 +37,32 @@ LEFT JOIN (
     GROUP BY i.id
 ) inv ON inv.user_id = u.id
 WHERE u.role = 'customer'
+  AND (sqlc.narg('customer_id') IS NULL OR u.id = sqlc.narg('customer_id'))
+  AND (sqlc.narg('first_name') IS NULL OR u.first_name LIKE CONCAT('%', sqlc.narg('first_name'), '%'))
+  AND (sqlc.narg('last_name') IS NULL OR u.last_name LIKE CONCAT('%', sqlc.narg('last_name'), '%'))
+  AND (sqlc.narg('email') IS NULL OR u.email LIKE CONCAT('%', sqlc.narg('email'), '%'))
+  AND (sqlc.narg('phone') IS NULL OR u.phone LIKE CONCAT('%', sqlc.narg('phone'), '%'))
 GROUP BY 
-    u.id, u.first_name, u.last_name, u.status, u.email, u.created_at;
+    u.id, u.first_name, u.last_name, u.status, u.email, u.phone, u.created_at, inv.currency
+ORDER BY
+    CASE WHEN sqlc.narg('sort_by') = 'id' AND sqlc.narg('sort_order') = 'asc' THEN u.id END ASC,
+    CASE WHEN sqlc.narg('sort_by') = 'id' AND sqlc.narg('sort_order') = 'desc' THEN u.id END DESC,
+    CASE WHEN sqlc.narg('sort_by') = 'first_name' AND sqlc.narg('sort_order') = 'asc' THEN u.first_name END ASC,
+    CASE WHEN sqlc.narg('sort_by') = 'first_name' AND sqlc.narg('sort_order') = 'desc' THEN u.first_name END DESC,
+    CASE WHEN sqlc.narg('sort_by') = 'last_name' AND sqlc.narg('sort_order') = 'asc' THEN u.last_name END ASC,
+    CASE WHEN sqlc.narg('sort_by') = 'last_name' AND sqlc.narg('sort_order') = 'desc' THEN u.last_name END DESC,
+    CASE WHEN sqlc.narg('sort_by') = 'status' AND sqlc.narg('sort_order') = 'asc' THEN u.status END ASC,
+    CASE WHEN sqlc.narg('sort_by') = 'status' AND sqlc.narg('sort_order') = 'desc' THEN u.status END DESC,
+    CASE WHEN sqlc.narg('sort_by') = 'email' AND sqlc.narg('sort_order') = 'asc' THEN u.email END ASC,
+    CASE WHEN sqlc.narg('sort_by') = 'email' AND sqlc.narg('sort_order') = 'desc' THEN u.email END DESC,
+    CASE WHEN sqlc.narg('sort_by') = 'phone' AND sqlc.narg('sort_order') = 'asc' THEN u.phone END ASC,
+    CASE WHEN sqlc.narg('sort_by') = 'phone' AND sqlc.narg('sort_order') = 'desc' THEN u.phone END DESC,
+    CASE WHEN sqlc.narg('sort_by') = 'updated_at' AND sqlc.narg('sort_order') = 'asc' THEN u.updated_at END ASC,
+    CASE WHEN sqlc.narg('sort_by') = 'updated_at' AND sqlc.narg('sort_order') = 'desc' THEN u.updated_at END DESC,
+    CASE WHEN sqlc.narg('sort_by') = 'created_at' AND sqlc.narg('sort_order') = 'asc' THEN u.created_at END ASC,
+    CASE WHEN sqlc.narg('sort_by') = 'created_at' AND sqlc.narg('sort_order') = 'desc' THEN u.created_at END DESC;
+
+
 
 
 -- name: GetDefaultCurrency :one

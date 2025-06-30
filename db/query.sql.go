@@ -76,7 +76,7 @@ func (q *Queries) CreateInvoiceActivity(ctx context.Context, arg CreateInvoiceAc
 }
 
 const createUser = `-- name: CreateUser :execresult
-INSERT INTO user (first_name, last_name, role, email, password, created_at, updated_at) VALUES (?,?,?,?,?,?,?)
+INSERT INTO user (first_name, last_name, role, email, password, phone, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)
 `
 
 type CreateUserParams struct {
@@ -85,6 +85,7 @@ type CreateUserParams struct {
 	Role      string               `json:"role"`
 	Email     string               `json:"email"`
 	Password  types.JSONNullString `json:"password"`
+	Phone     string               `json:"phone"`
 	CreatedAt time.Time            `json:"created_at"`
 	UpdatedAt time.Time            `json:"updated_at"`
 }
@@ -96,6 +97,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (sql.Res
 		arg.Role,
 		arg.Email,
 		arg.Password,
+		arg.Phone,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -108,6 +110,7 @@ SELECT
     u.last_name, 
     u.status, 
     u.email, 
+    u.phone,
     u.created_at, 
     COALESCE(inv.currency, '') AS currency,
     COUNT(inv.id) AS number_of_invoices, 
@@ -127,9 +130,41 @@ LEFT JOIN (
     GROUP BY i.id
 ) inv ON inv.user_id = u.id
 WHERE u.role = 'customer'
+  AND (? IS NULL OR u.id = ?)
+  AND (? IS NULL OR u.first_name LIKE CONCAT('%', ?, '%'))
+  AND (? IS NULL OR u.last_name LIKE CONCAT('%', ?, '%'))
+  AND (? IS NULL OR u.email LIKE CONCAT('%', ?, '%'))
+  AND (? IS NULL OR u.phone LIKE CONCAT('%', ?, '%'))
 GROUP BY 
-    u.id, u.first_name, u.last_name, u.status, u.email, u.created_at
+    u.id, u.first_name, u.last_name, u.status, u.email, u.phone, u.created_at, inv.currency
+ORDER BY
+    CASE WHEN ? = 'id' AND ? = 'asc' THEN u.id END ASC,
+    CASE WHEN ? = 'id' AND ? = 'desc' THEN u.id END DESC,
+    CASE WHEN ? = 'first_name' AND ? = 'asc' THEN u.first_name END ASC,
+    CASE WHEN ? = 'first_name' AND ? = 'desc' THEN u.first_name END DESC,
+    CASE WHEN ? = 'last_name' AND ? = 'asc' THEN u.last_name END ASC,
+    CASE WHEN ? = 'last_name' AND ? = 'desc' THEN u.last_name END DESC,
+    CASE WHEN ? = 'status' AND ? = 'asc' THEN u.status END ASC,
+    CASE WHEN ? = 'status' AND ? = 'desc' THEN u.status END DESC,
+    CASE WHEN ? = 'email' AND ? = 'asc' THEN u.email END ASC,
+    CASE WHEN ? = 'email' AND ? = 'desc' THEN u.email END DESC,
+    CASE WHEN ? = 'phone' AND ? = 'asc' THEN u.phone END ASC,
+    CASE WHEN ? = 'phone' AND ? = 'desc' THEN u.phone END DESC,
+    CASE WHEN ? = 'updated_at' AND ? = 'asc' THEN u.updated_at END ASC,
+    CASE WHEN ? = 'updated_at' AND ? = 'desc' THEN u.updated_at END DESC,
+    CASE WHEN ? = 'created_at' AND ? = 'asc' THEN u.created_at END ASC,
+    CASE WHEN ? = 'created_at' AND ? = 'desc' THEN u.created_at END DESC
 `
+
+type GetCustomersParams struct {
+	CustomerID sql.NullInt32 `json:"customer_id"`
+	FirstName  interface{}   `json:"first_name"`
+	LastName   interface{}   `json:"last_name"`
+	Email      interface{}   `json:"email"`
+	Phone      interface{}   `json:"phone"`
+	SortBy     interface{}   `json:"sort_by"`
+	SortOrder  interface{}   `json:"sort_order"`
+}
 
 type GetCustomersRow struct {
 	ID               int32     `json:"id"`
@@ -137,6 +172,7 @@ type GetCustomersRow struct {
 	LastName         string    `json:"last_name"`
 	Status           string    `json:"status"`
 	Email            string    `json:"email"`
+	Phone            string    `json:"phone"`
 	CreatedAt        time.Time `json:"created_at"`
 	Currency         string    `json:"currency"`
 	NumberOfInvoices int64     `json:"number_of_invoices"`
@@ -144,8 +180,51 @@ type GetCustomersRow struct {
 	TotalCollected   int64     `json:"total_collected"`
 }
 
-func (q *Queries) GetCustomers(ctx context.Context) ([]GetCustomersRow, error) {
-	rows, err := q.db.QueryContext(ctx, getCustomers)
+func (q *Queries) GetCustomers(ctx context.Context, arg GetCustomersParams) ([]GetCustomersRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCustomers,
+		arg.CustomerID,
+		arg.CustomerID,
+		arg.FirstName,
+		arg.FirstName,
+		arg.LastName,
+		arg.LastName,
+		arg.Email,
+		arg.Email,
+		arg.Phone,
+		arg.Phone,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+		arg.SortBy,
+		arg.SortOrder,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -159,6 +238,7 @@ func (q *Queries) GetCustomers(ctx context.Context) ([]GetCustomersRow, error) {
 			&i.LastName,
 			&i.Status,
 			&i.Email,
+			&i.Phone,
 			&i.CreatedAt,
 			&i.Currency,
 			&i.NumberOfInvoices,
